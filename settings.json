@@ -1,0 +1,55 @@
+{
+  "tasks": [
+    {
+      "name": "Задача 1",
+      "mode": "vk_and_tg",
+      "multichat": false,
+      "multichat_bot": "",
+      "target": {
+        "chat_id": 0
+      },
+      "sources": {
+        "vk_exports": [],
+        "vk_media_mirrors": [],
+        "telegram_exports": []
+      },
+      "bots": {},
+      "sender_map": {
+        "vk": {},
+        "vk_default": "",
+        "telegram": {},
+        "telegram_default": ""
+      },
+      "display_names": {},
+      "system_bot": "",
+      "attachments_filter": {
+        "photo": true,
+        "sticker": true,
+        "voice": true,
+        "audio": true,
+        "video": true,
+        "video_note": true,
+        "animation": true,
+        "document": true,
+        "gift": true
+      },
+      "rate": {
+        "min_interval_seconds": 1.5,
+        "jitter_seconds": 0.4,
+        "error_backoff_seconds": 5.0,
+        "http_connect_timeout": 15,
+        "http_read_timeout": 120
+      },
+      "retry": {
+        "media_download_attempts": 12,
+        "media_retry_backoff_seconds": 5.0,
+        "send_media_attempts": 6
+      },
+      "behavior": {
+        "send_date_headers": true,
+        "send_section_headers": true,
+        "placeholders_for_missing": true
+      }
+    }
+  ]
+}
