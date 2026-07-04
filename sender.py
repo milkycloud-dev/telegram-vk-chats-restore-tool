@@ -28,6 +28,7 @@ _STAT_KEY = {
 
 
 def _resolve(att, ext: str) -> str | None:
+    """Execute the resolve operation."""
     if att.local_path and os.path.exists(att.local_path):
         return att.local_path
     if att.url:

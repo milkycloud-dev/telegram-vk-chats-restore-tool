@@ -19,11 +19,14 @@ TYPE_KEYS = ["text", "photo", "sticker", "voice", "audio", "video",
 
 
 class Stats:
+    """Execute the Stats operation."""
     def __init__(self):
+        """Initialize the instance."""
         self._lock = threading.Lock()
         self.reset()
 
     def reset(self):
+        """Execute the reset operation."""
         with self._lock:
             self.total = 0
             self.index = 0           # actions processed so far
@@ -52,11 +55,13 @@ class Stats:
             self.event_log = []
 
     def start(self, total):
+        """Execute the start operation."""
         with self._lock:
             self.total = total
             self.start_ts = time.time()
 
     def inc(self, key, n=1):
+        """Execute the inc operation."""
         with self._lock:
             if key in self.counts:
                 self.counts[key] += n
@@ -64,6 +69,7 @@ class Stats:
                 setattr(self, key, getattr(self, key, 0) + n)
 
     def set(self, **kw):
+        """Execute the set operation."""
         with self._lock:
             for k, v in kw.items():
                 setattr(self, k, v)
@@ -79,10 +85,12 @@ class Stats:
             self.last_error = f"{level}: {message}"
 
     def events_snapshot(self) -> list:
+        """Execute the events snapshot operation."""
         with self._lock:
             return list(self.event_log)
 
     def snapshot(self) -> dict:
+        """Execute the snapshot operation."""
         with self._lock:
             elapsed = (time.time() - self.start_ts) if self.start_ts else 0.0
             done = self.index
@@ -108,7 +116,9 @@ class Stats:
 
 
 class Control:
+    """Execute the Control operation."""
     def __init__(self):
+        """Initialize the instance."""
         self._stop = threading.Event()
         self._pause = threading.Event()
         self._skip = threading.Event()
@@ -116,37 +126,47 @@ class Control:
 
     # stop -------------------------------------------------------------
     def request_stop(self):
+        """Execute the request stop operation."""
         self._stop.set()
         self._pause.clear()  # unblock any pause wait
 
     def stop_requested(self) -> bool:
+        """Execute the stop requested operation."""
         return self._stop.is_set()
 
     def clear_stop(self):
+        """Execute the clear stop operation."""
         self._stop.clear()
 
     # pause ------------------------------------------------------------
     def pause(self):
+        """Execute the pause operation."""
         self._pause.set()
 
     def resume(self):
+        """Execute the resume operation."""
         self._pause.clear()
 
     def is_paused(self) -> bool:
+        """Check if paused."""
         return self._pause.is_set()
 
     def wait_if_paused(self):
+        """Execute the wait if paused operation."""
         while self._pause.is_set() and not self._stop.is_set():
             time.sleep(0.1)
 
     # skip -------------------------------------------------------------
     def request_skip(self):
+        """Execute the request skip operation."""
         self._skip.set()
 
     def skip_requested(self) -> bool:
+        """Execute the skip requested operation."""
         return self._skip.is_set()
 
     def clear_skip(self):
+        """Execute the clear skip operation."""
         self._skip.clear()
 
     def interruptible_sleep(self, seconds: float, allow_skip: bool = True):

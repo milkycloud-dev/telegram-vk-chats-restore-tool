@@ -18,6 +18,7 @@ _last_send_ts = [0.0]
 
 
 class TelegramError(Exception):
+    """Execute the TelegramError operation."""
     pass
 
 
@@ -28,6 +29,7 @@ _probe_session = requests.Session()
 
 
 def _network_up() -> bool:
+    """Execute the network up operation."""
     try:
         _probe_session.head(_PROBE_URL, timeout=(5, 5))
         return True
@@ -41,6 +43,7 @@ def _interruptible_sleep(seconds: float):
 
 
 def _pace():
+    """Execute the pace operation."""
     CONTROL.wait_if_paused()
     if CONTROL.stop_requested():
         raise StopRequested()
@@ -64,7 +67,9 @@ def _pace():
 
 
 class Bot:
+    """Execute the Bot operation."""
     def __init__(self, token: str, name: str):
+        """Initialize the instance."""
         self.token = token
         self.name = name
         self._s = requests.Session()
@@ -75,6 +80,7 @@ class Bot:
         box = {}
 
         def worker():
+            """Execute the worker operation."""
             try:
                 box["resp"] = self._s.post(url, data=data, files=files,
                                            timeout=config.HTTP_TIMEOUT)
@@ -95,6 +101,7 @@ class Bot:
 
     def _rewind(self, files):
         # Re-seek uploaded file handles before a retry.
+        """Execute the rewind operation."""
         if not files:
             return
         for v in files.values():
@@ -181,6 +188,7 @@ class Bot:
 
     # --- public send methods --------------------------------------------------
     def send_message(self, text: str, **kw):
+        """Execute the send message operation."""
         data = {"chat_id": config.CHAT_ID, "text": text,
                 "disable_web_page_preview": True}
         data.update(kw)
@@ -189,6 +197,7 @@ class Bot:
     def _send_file(self, method: str, field: str, path_or_url: str, data: dict):
         # Local file -> multipart upload; URL/file_id -> plain field.
         # Media uploads are capped so a hanging file is skipped, not retried forever.
+        """Execute the send file operation."""
         cap = config.SEND_MEDIA_ATTEMPTS
         if path_or_url and os.path.exists(path_or_url):
             with open(path_or_url, "rb") as fh:
@@ -198,16 +207,19 @@ class Bot:
         return self._call(method, data, max_net_attempts=cap)
 
     def send_photo(self, photo: str, caption: str = ""):
+        """Execute the send photo operation."""
         data = {"chat_id": config.CHAT_ID}
         if caption:
             data["caption"] = caption[:1024]
         return self._send_file("sendPhoto", "photo", photo, data)
 
     def send_sticker(self, sticker: str):
+        """Execute the send sticker operation."""
         return self._send_file("sendSticker", "sticker", sticker,
                                {"chat_id": config.CHAT_ID})
 
     def send_voice(self, voice: str, caption: str = "", duration: int = 0):
+        """Execute the send voice operation."""
         data = {"chat_id": config.CHAT_ID}
         if caption:
             data["caption"] = caption[:1024]
@@ -217,6 +229,7 @@ class Bot:
 
     def send_audio(self, audio: str, caption: str = "", title: str = "",
                    performer: str = "", duration: int = 0):
+        """Execute the send audio operation."""
         data = {"chat_id": config.CHAT_ID}
         if caption:
             data["caption"] = caption[:1024]
@@ -229,6 +242,7 @@ class Bot:
         return self._send_file("sendAudio", "audio", audio, data)
 
     def send_video(self, video: str, caption: str = "", duration: int = 0):
+        """Execute the send video operation."""
         data = {"chat_id": config.CHAT_ID}
         if caption:
             data["caption"] = caption[:1024]
@@ -237,22 +251,26 @@ class Bot:
         return self._send_file("sendVideo", "video", video, data)
 
     def send_video_note(self, video_note: str):
+        """Execute the send video note operation."""
         return self._send_file("sendVideoNote", "video_note", video_note,
                                {"chat_id": config.CHAT_ID})
 
     def send_animation(self, animation: str, caption: str = ""):
+        """Execute the send animation operation."""
         data = {"chat_id": config.CHAT_ID}
         if caption:
             data["caption"] = caption[:1024]
         return self._send_file("sendAnimation", "animation", animation, data)
 
     def send_document(self, document: str, caption: str = ""):
+        """Execute the send document operation."""
         data = {"chat_id": config.CHAT_ID}
         if caption:
             data["caption"] = caption[:1024]
         return self._send_file("sendDocument", "document", document, data)
 
     def get_me(self):
+        """Retrieve the me."""
         return self._call("getMe", {})
 
 
@@ -260,6 +278,7 @@ _bots: dict[str, Bot] = {}
 
 
 def get_bot(key: str) -> Bot:
+    """Retrieve the bot."""
     if key not in _bots:
         token = config.BOT_TOKENS.get(key, "")
         if not token:

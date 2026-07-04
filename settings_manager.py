@@ -11,6 +11,7 @@ import json
 import os
 
 import config
+from i18n import t
 
 EXPORTER_DIR = os.path.dirname(os.path.abspath(__file__))
 SETTINGS_FILE = os.path.join(EXPORTER_DIR, "settings.json")
@@ -70,10 +71,12 @@ def normalize_path(path: str) -> str:
 # ---------------------------------------------------------------------------
 
 def default_attachments_filter() -> dict[str, bool]:
+    """Execute the default attachments filter operation."""
     return {k: True for k in ALL_ATTACHMENT_KINDS}
 
 
 def default_task() -> dict:
+    """Execute the default task operation."""
     return {
         "name": "Задача 1",
         "mode": MODE_VK_AND_TG,
@@ -118,6 +121,7 @@ def default_task() -> dict:
 
 
 def default_settings() -> dict:
+    """Execute the default settings operation."""
     return {"tasks": [default_task()]}
 
 
@@ -126,6 +130,7 @@ def default_settings() -> dict:
 # ---------------------------------------------------------------------------
 
 def _deep_merge(base: dict, override: dict) -> dict:
+    """Execute the deep merge operation."""
     out = copy.deepcopy(base)
     for k, v in override.items():
         if isinstance(v, dict) and isinstance(out.get(k), dict):
@@ -334,6 +339,7 @@ def validate_settings(data: dict) -> list[str]:
 
 
 def _looks_like_tg_export(folder: str) -> bool:
+    """Execute the looks like tg export operation."""
     try:
         for name in os.listdir(folder):
             if name.startswith("messages") and name.endswith(".html"):
@@ -348,6 +354,7 @@ def _looks_like_tg_export(folder: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def load_settings(path: str | None = None) -> dict:
+    """Execute the load settings operation."""
     path = path or SETTINGS_FILE
     if not os.path.isfile(path):
         data = default_settings()
@@ -359,6 +366,7 @@ def load_settings(path: str | None = None) -> dict:
 
 
 def save_settings(data: dict, path: str | None = None) -> str:
+    """Execute the save settings operation."""
     path = path or SETTINGS_FILE
     s = normalize_settings(data)
     tmp = path + ".tmp"
@@ -475,28 +483,30 @@ def apply_settings(data: dict | None = None) -> dict:
 
 
 def load_and_apply(path: str | None = None) -> dict:
+    """Execute the load and apply operation."""
     s = load_settings(path)
     if s["tasks"]:
         apply_task(s["tasks"][0], 0)
     return s
 
 
-def task_summary(t: dict) -> str:
+def task_summary(t_data: dict) -> str:
     """One-line summary for a task."""
-    t = normalize_task(t)
-    mode = MODE_LABELS.get(t["mode"], t["mode"])
-    chat = t["target"]["chat_id"]
-    n_vk = len(t["sources"]["vk_exports"])
-    n_tg = len(t["sources"]["telegram_exports"])
-    n_bots = len(t["bots"])
-    parts = [f"Режим: {mode}", f"Chat: {chat or '—'}"]
-    if t["mode"] in (MODE_VK_ONLY, MODE_VK_AND_TG):
-        parts.append(f"ВК: {n_vk}")
-    if t["mode"] in (MODE_TG_ONLY, MODE_VK_AND_TG):
-        parts.append(f"ТГ: {n_tg}")
-    parts.append(f"Ботов: {n_bots}")
-    if t["multichat"]:
-        parts.append("мульти-чат")
+    t_data = normalize_task(t_data)
+    mode = t(f"mode.{t_data['mode']}")
+    chat = t_data["target"]["chat_id"]
+    n_vk = len(t_data["sources"]["vk_exports"])
+    n_tg = len(t_data["sources"]["telegram_exports"])
+    n_bots = len(t_data["bots"])
+    
+    parts = [f"{t('gui.summary_mode')} {mode}", f"{t('gui.summary_chat')} {chat or '—'}"]
+    if t_data["mode"] in (MODE_VK_ONLY, MODE_VK_AND_TG):
+        parts.append(f"{t('gui.summary_vk')} {n_vk}")
+    if t_data["mode"] in (MODE_TG_ONLY, MODE_VK_AND_TG):
+        parts.append(f"{t('gui.summary_tg')} {n_tg}")
+    parts.append(f"{t('gui.summary_bots')} {n_bots}")
+    if t_data["multichat"]:
+        parts.append(t("gui.summary_multichat"))
     return " · ".join(parts)
 
 
@@ -506,4 +516,4 @@ def settings_summary(s: dict | None = None) -> str:
     n = len(s["tasks"])
     if n == 1:
         return task_summary(s["tasks"][0])
-    return f"Задач: {n}"
+    return t("gui.summary_tasks").format(n=n)

@@ -14,6 +14,7 @@ _MAP: dict[str, str] | None = None
 
 
 def _mirror_list() -> list[tuple[str, str]]:
+    """Execute the mirror list operation."""
     mirrors = getattr(config, "VK_MEDIA_MIRRORS", None) or []
     if mirrors:
         return list(mirrors)
@@ -28,12 +29,14 @@ def _mirror_list() -> list[tuple[str, str]]:
 
 
 def reset():
+    """Execute the reset operation."""
     global _MAP, _MIRRORS
     _MAP = None
     _MIRRORS = None
 
 
 def _parse(newtxt: str, webdir: str, out: dict):
+    """Execute the parse operation."""
     if not os.path.exists(newtxt):
         return
     with open(newtxt, encoding="utf-8", errors="replace") as f:
@@ -52,6 +55,7 @@ def _parse(newtxt: str, webdir: str, out: dict):
 
 
 def _build() -> dict:
+    """Execute the build operation."""
     out: dict[str, str] = {}
     mirrors = _mirror_list()
     for newtxt, webdir in reversed(mirrors):
@@ -60,6 +64,7 @@ def _build() -> dict:
 
 
 def lookup(url: str | None) -> str | None:
+    """Execute the lookup operation."""
     global _MAP
     if _MAP is None:
         _MAP = _build()
@@ -69,6 +74,7 @@ def lookup(url: str | None) -> str | None:
 
 
 def size() -> int:
+    """Execute the size operation."""
     global _MAP
     if _MAP is None:
         _MAP = _build()

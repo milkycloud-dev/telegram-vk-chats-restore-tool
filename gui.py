@@ -17,6 +17,7 @@ from tkinter import filedialog, messagebox, ttk
 import config
 import run_export
 from control import CONTROL
+from i18n import t, set_lang, get_lang
 from settings_manager import (
     ALL_ATTACHMENT_KINDS,
     ATTACHMENT_LABELS,
@@ -59,10 +60,12 @@ LOG_FG = "#e6edf3"
 
 
 def human_mb(nbytes: float) -> str:
+    """Execute the human mb operation."""
     return f"{nbytes / 1024 / 1024:.1f}"
 
 
 def fmt_dur(seconds: float) -> str:
+    """Execute the fmt dur operation."""
     seconds = int(max(0, seconds))
     h, rem = divmod(seconds, 3600)
     m, s = divmod(rem, 60)
@@ -81,6 +84,7 @@ class PathRow(ttk.Frame):
     """Label + path entry + browse button."""
 
     def __init__(self, parent, label: str, *, is_dir=False, width=58):
+        """Initialize the instance."""
         super().__init__(parent)
         self.is_dir = is_dir
         ttk.Label(self, text=label, width=14).pack(side="left", padx=(0, 4))
@@ -90,6 +94,7 @@ class PathRow(ttk.Frame):
         ttk.Button(self, text="…", width=3, command=self._browse).pack(side="left")
 
     def _browse(self):
+        """Execute the browse operation."""
         if self.is_dir:
             p = filedialog.askdirectory(initialdir=self.var.get() or os.getcwd())
         else:
@@ -101,9 +106,11 @@ class PathRow(ttk.Frame):
             self.var.set(normalize_path(p))
 
     def get(self) -> str:
+        """Execute the get operation."""
         return normalize_path(self.var.get())
 
     def set(self, value: str):
+        """Execute the set operation."""
         self.var.set(value or "")
 
 
@@ -111,6 +118,7 @@ class VkExportRow(ttk.Frame):
     """One VK JSON export: file path + label + remove."""
 
     def __init__(self, parent, on_remove, on_path_change=None):
+        """Initialize the instance."""
         super().__init__(parent)
         self.on_remove = on_remove
         self.on_path_change = on_path_change
@@ -121,7 +129,7 @@ class VkExportRow(ttk.Frame):
         ttk.Entry(self, textvariable=self.path_var, width=50).grid(
             row=0, column=1, sticky="ew", padx=4)
         ttk.Button(self, text="…", width=3, command=self._browse).grid(row=0, column=2)
-        ttk.Label(self, text="Заголовок:", width=10).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        ttk.Label(self, text=t("gui.title_label"), width=10).grid(row=1, column=0, sticky="w", pady=(4, 0))
         self.label_var = tk.StringVar()
         ttk.Entry(self, textvariable=self.label_var, width=24).grid(
             row=1, column=1, sticky="w", padx=4, pady=(4, 0))
@@ -130,6 +138,7 @@ class VkExportRow(ttk.Frame):
         self.columnconfigure(1, weight=1)
 
     def _browse(self):
+        """Execute the browse operation."""
         p = filedialog.askopenfilename(
             initialdir=os.path.dirname(self.path_var.get()) if self.path_var.get() else os.getcwd(),
             filetypes=[("JSON", "*.json"), ("All", "*.*")])
@@ -137,14 +146,17 @@ class VkExportRow(ttk.Frame):
             self.path_var.set(normalize_path(p))
 
     def _path_changed(self):
+        """Execute the path changed operation."""
         if self.on_path_change:
             self.on_path_change()
 
     def get(self) -> dict:
+        """Execute the get operation."""
         return {"path": normalize_path(self.path_var.get()),
                 "label": self.label_var.get().strip()}
 
     def set(self, data: dict):
+        """Execute the set operation."""
         self.path_var.set(data.get("path", ""))
         self.label_var.set(data.get("label", ""))
 
@@ -153,17 +165,18 @@ class TgExportRow(ttk.Frame):
     """One Telegram export: folder path + section label + remove."""
 
     def __init__(self, parent, on_remove, on_path_change=None):
+        """Initialize the instance."""
         super().__init__(parent)
         self.on_remove = on_remove
         self.on_path_change = on_path_change
 
-        ttk.Label(self, text="Папка:", width=8).grid(row=0, column=0, sticky="w")
+        ttk.Label(self, text=t("gui.folder_label"), width=8).grid(row=0, column=0, sticky="w")
         self.path_var = tk.StringVar()
         self.path_var.trace_add("write", lambda *_: self._path_changed())
         ttk.Entry(self, textvariable=self.path_var, width=50).grid(
             row=0, column=1, sticky="ew", padx=4)
         ttk.Button(self, text="…", width=3, command=self._browse).grid(row=0, column=2)
-        ttk.Label(self, text="Заголовок:", width=10).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        ttk.Label(self, text=t("gui.title_label"), width=10).grid(row=1, column=0, sticky="w", pady=(4, 0))
         self.label_var = tk.StringVar()
         ttk.Entry(self, textvariable=self.label_var, width=24).grid(
             row=1, column=1, sticky="w", padx=4, pady=(4, 0))
@@ -172,19 +185,23 @@ class TgExportRow(ttk.Frame):
         self.columnconfigure(1, weight=1)
 
     def _browse(self):
+        """Execute the browse operation."""
         p = filedialog.askdirectory(initialdir=self.path_var.get() or os.getcwd())
         if p:
             self.path_var.set(normalize_path(p))
 
     def _path_changed(self):
+        """Execute the path changed operation."""
         if self.on_path_change:
             self.on_path_change()
 
     def get(self) -> dict:
+        """Execute the get operation."""
         return {"path": normalize_path(self.path_var.get()),
                 "label": self.label_var.get().strip()}
 
     def set(self, data: dict):
+        """Execute the set operation."""
         self.path_var.set(data.get("path", ""))
         self.label_var.set(data.get("label", ""))
 
@@ -193,42 +210,45 @@ class BotRow(ttk.Frame):
     """One bot configuration: key/name, token, system/default flags."""
 
     def __init__(self, parent, on_remove):
+        """Initialize the instance."""
         super().__init__(parent)
         self.on_remove = on_remove
 
         row0 = ttk.Frame(self)
         row0.pack(fill="x")
-        ttk.Label(row0, text="Имя:", width=6).pack(side="left")
+        ttk.Label(row0, text=t("gui.name_label"), width=6).pack(side="left")
         self.key_var = tk.StringVar()
         ttk.Entry(row0, textvariable=self.key_var, width=14).pack(side="left", padx=4)
-        ttk.Label(row0, text="Токен:", width=6).pack(side="left")
+        ttk.Label(row0, text=t("gui.token_label"), width=6).pack(side="left")
         self.token_var = tk.StringVar()
         ttk.Entry(row0, textvariable=self.token_var, width=36, show="•").pack(
             side="left", fill="x", expand=True, padx=4)
         self.is_system = tk.BooleanVar()
-        ttk.Checkbutton(row0, text="Сист.", variable=self.is_system).pack(side="left", padx=2)
+        ttk.Checkbutton(row0, text=t("gui.system_bot_flag"), variable=self.is_system).pack(side="left", padx=2)
         self.is_default = tk.BooleanVar()
-        ttk.Checkbutton(row0, text="По ум.", variable=self.is_default).pack(side="left", padx=2)
+        ttk.Checkbutton(row0, text=t("gui.default_bot_flag"), variable=self.is_default).pack(side="left", padx=2)
         ttk.Button(row0, text="✕", width=3, command=lambda: self.on_remove(self)).pack(
             side="left", padx=(4, 0))
 
         row1 = ttk.Frame(self)
         row1.pack(fill="x", pady=(2, 0))
-        ttk.Label(row1, text="Отобр.:", width=6, foreground="#666").pack(side="left")
+        ttk.Label(row1, text=t("gui.display_name_label"), width=6, foreground="#666").pack(side="left")
         self.display_var = tk.StringVar()
         ttk.Entry(row1, textvariable=self.display_var, width=14).pack(side="left", padx=4)
         ttk.Label(row1, text="VK ID:", width=6, foreground="#666").pack(side="left")
         self.vk_ids_var = tk.StringVar()
         ttk.Entry(row1, textvariable=self.vk_ids_var, width=16).pack(side="left", padx=4)
-        ttk.Label(row1, text="TG имена:", foreground="#666").pack(side="left")
+        ttk.Label(row1, text=t("gui.tg_names_label"), foreground="#666").pack(side="left")
         self.tg_names_var = tk.StringVar()
         ttk.Entry(row1, textvariable=self.tg_names_var, width=24).pack(
             side="left", fill="x", expand=True, padx=4)
 
     def get_key(self) -> str:
+        """Retrieve the key."""
         return self.key_var.get().strip()
 
     def get_data(self) -> dict:
+        """Retrieve the data."""
         return {
             "key": self.get_key(),
             "token": self.token_var.get().strip(),
@@ -240,6 +260,7 @@ class BotRow(ttk.Frame):
         }
 
     def set_data(self, data: dict):
+        """Configure the data."""
         self.key_var.set(data.get("key", ""))
         self.token_var.set(data.get("token", ""))
         self.display_var.set(data.get("display_name", ""))
@@ -257,6 +278,7 @@ class TaskPanel(ttk.LabelFrame):
     """Complete settings panel for one replay task."""
 
     def __init__(self, parent, task_index: int, on_remove, on_detect_senders):
+        """Initialize the instance."""
         self.task_index = task_index
         self.on_remove_cb = on_remove
         self.on_detect_senders = on_detect_senders
@@ -267,70 +289,71 @@ class TaskPanel(ttk.LabelFrame):
         self._detected_vk = tk.StringVar(value="")
         self._detected_tg = tk.StringVar(value="")
 
-        self.name_var = tk.StringVar(value=f"Задача {task_index + 1}")
-        super().__init__(parent, text=f"Задача {task_index + 1}", padding=10)
+        self.name_var = tk.StringVar(value=t("gui.task_default_name", num=task_index + 1))
+        super().__init__(parent, text=t("gui.task_default_name", num=task_index + 1), padding=10)
 
         self._build()
 
     def _build(self):
         # Name + delete
+        """Execute the build operation."""
         top = ttk.Frame(self)
         top.pack(fill="x", pady=(0, 8))
-        ttk.Label(top, text="Название:").pack(side="left")
+        ttk.Label(top, text=t("gui.task_name_label")).pack(side="left")
         self.name_var.trace_add("write", lambda *_: self.configure(
-            text=self.name_var.get() or f"Задача {self.task_index + 1}"))
+            text=self.name_var.get() or t("gui.task_default_name", num=self.task_index + 1)))
         ttk.Entry(top, textvariable=self.name_var, width=24).pack(side="left", padx=8)
-        ttk.Button(top, text="✕ Удалить задачу", command=self._on_remove).pack(side="right")
+        ttk.Button(top, text=t("gui.delete_task_btn"), command=self._on_remove).pack(side="right")
 
         # Target chat
-        tf = ttk.LabelFrame(self, text="Целевой чат Telegram", padding=8)
+        tf = ttk.LabelFrame(self, text=t("gui.target_chat_frame"), padding=8)
         tf.pack(fill="x", pady=(0, 6))
         row = ttk.Frame(tf)
         row.pack(fill="x")
         ttk.Label(row, text="Chat ID:").pack(side="left")
         self.chat_var = tk.StringVar()
         ttk.Entry(row, textvariable=self.chat_var, width=22).pack(side="left", padx=8)
-        ttk.Label(row, text="(для супергруппы: -100…)", foreground="#666").pack(side="left")
+        ttk.Label(row, text=t("gui.supergroup_hint"), foreground="#666").pack(side="left")
 
         # Mode
-        mf = ttk.LabelFrame(self, text="Режим отправки", padding=8)
+        mf = ttk.LabelFrame(self, text=t("gui.mode_frame"), padding=8)
         mf.pack(fill="x", pady=(0, 6))
         self.mode_var = tk.StringVar(value=MODE_VK_AND_TG)
         mode_row = ttk.Frame(mf)
         mode_row.pack(fill="x")
         for mode in MODES:
-            ttk.Radiobutton(mode_row, text=MODE_LABELS[mode], variable=self.mode_var,
+            ttk.Radiobutton(mode_row, text=t(f"mode.{mode}"), variable=self.mode_var,
                             value=mode, command=self._on_mode_change).pack(side="left", padx=(0, 12))
         self.multichat_var = tk.BooleanVar()
-        ttk.Checkbutton(mf, text="Мульти-чат (один бот, [Имя] перед сообщением)",
+        ttk.Checkbutton(mf, text=t("gui.multichat_cb"),
                         variable=self.multichat_var).pack(anchor="w", pady=(6, 0))
 
         # VK sources
-        self.vk_frame = ttk.LabelFrame(self, text="ВКонтакте — JSON экспорт (+)", padding=8)
+        self.vk_frame = ttk.LabelFrame(self, text=t("gui.vk_frame"), padding=8)
         self.vk_frame.pack(fill="x", pady=(0, 6))
         self.vk_list = ttk.Frame(self.vk_frame)
         self.vk_list.pack(fill="x")
-        ttk.Button(self.vk_frame, text="+ Добавить VK JSON",
+        ttk.Button(self.vk_frame, text=t("gui.add_vk_btn"),
                    command=self._add_vk_row).pack(anchor="w", pady=(6, 0))
 
         # TG sources
-        self.tg_frame = ttk.LabelFrame(self, text="Telegram — папки экспорта (+)", padding=8)
+        self.tg_frame = ttk.LabelFrame(self, text=t("gui.tg_frame"), padding=8)
         self.tg_frame.pack(fill="x", pady=(0, 6))
         self.tg_list = ttk.Frame(self.tg_frame)
         self.tg_list.pack(fill="x")
-        ttk.Button(self.tg_frame, text="+ Добавить папку TG",
+        ttk.Button(self.tg_frame, text=t("gui.add_tg_btn"),
                    command=self._add_tg_row).pack(anchor="w", pady=(6, 0))
 
         # Bots & senders
-        bf = ttk.LabelFrame(self, text="Боты и отправители", padding=8)
+        bf = ttk.LabelFrame(self, text=t("gui.bots_frame"), padding=8)
         bf.pack(fill="x", pady=(0, 6))
         self.bot_list = ttk.Frame(bf)
         self.bot_list.pack(fill="x")
         btn_row = ttk.Frame(bf)
         btn_row.pack(fill="x", pady=(6, 0))
-        ttk.Button(btn_row, text="+ Добавить бота",
+        ttk.Button(btn_row, text=t("gui.add_bot_btn"),
                    command=self._add_bot_row).pack(side="left")
-        ttk.Button(btn_row, text="🔍 Обнаружить отправителей",
+        ttk.Button(btn_row, text=t("gui.detect_senders_btn"),
                    command=self._detect_senders).pack(side="left", padx=8)
         # Detected senders display
         det = ttk.Frame(bf)
@@ -341,39 +364,40 @@ class TaskPanel(ttk.LabelFrame):
                   font=FONT_SM, wraplength=800).pack(anchor="w")
 
         # Attachment filter
-        af = ttk.LabelFrame(self, text="Вложения (что отправлять)", padding=8)
+        af = ttk.LabelFrame(self, text=t("gui.attachments_frame"), padding=8)
         af.pack(fill="x", pady=(0, 6))
         self.att_frame = ttk.Frame(af)
         self.att_frame.pack(fill="x")
         for kind in ALL_ATTACHMENT_KINDS:
             v = tk.BooleanVar(value=True)
             self.att_vars[kind] = v
-            ttk.Checkbutton(self.att_frame, text=ATTACHMENT_LABELS.get(kind, kind),
+            ttk.Checkbutton(self.att_frame, text=t(f"att.{kind}"),
                             variable=v).pack(side="left", padx=(0, 8))
 
         # Rate & behavior
-        rf = ttk.LabelFrame(self, text="Скорость и поведение", padding=8)
+        rf = ttk.LabelFrame(self, text=t("gui.behavior_frame"), padding=8)
         rf.pack(fill="x", pady=(0, 6))
         g = ttk.Frame(rf)
         g.pack(fill="x")
-        ttk.Label(g, text="Пауза, с:").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Label(g, text=t("gui.delay_label")).grid(row=0, column=0, sticky="w", pady=4)
         self.delay_var = tk.StringVar(value="1.5")
         ttk.Entry(g, textvariable=self.delay_var, width=8).grid(row=0, column=1, sticky="w", padx=6)
-        ttk.Label(g, text="Попыток медиа:").grid(row=0, column=2, sticky="w", padx=(20, 0))
+        ttk.Label(g, text=t("gui.retries_label")).grid(row=0, column=2, sticky="w", padx=(20, 0))
         self.send_attempts_var = tk.StringVar(value="6")
         ttk.Entry(g, textvariable=self.send_attempts_var, width=6).grid(
             row=0, column=3, sticky="w", padx=6)
         self.date_hdr = tk.BooleanVar(value=True)
         self.sect_hdr = tk.BooleanVar(value=True)
         self.placeholders = tk.BooleanVar(value=True)
-        ttk.Checkbutton(g, text="Заголовки дат", variable=self.date_hdr).grid(
+        ttk.Checkbutton(g, text=t("gui.date_hdr_cb"), variable=self.date_hdr).grid(
             row=1, column=0, columnspan=2, sticky="w", pady=4)
-        ttk.Checkbutton(g, text="Заголовки секций", variable=self.sect_hdr).grid(
+        ttk.Checkbutton(g, text=t("gui.sect_hdr_cb"), variable=self.sect_hdr).grid(
             row=1, column=2, columnspan=2, sticky="w", pady=4)
-        ttk.Checkbutton(g, text="Заглушки для отсутствующих файлов",
+        ttk.Checkbutton(g, text=t("gui.placeholders_cb"),
                         variable=self.placeholders).grid(row=2, column=0, columnspan=4, sticky="w")
 
     def _on_remove(self):
+        """Handle the remove event."""
         self.on_remove_cb(self)
 
     def _on_mode_change(self):
@@ -391,6 +415,7 @@ class TaskPanel(ttk.LabelFrame):
 
     # ---- VK rows ----
     def _add_vk_row(self, data: dict | None = None):
+        """Execute the add vk row operation."""
         row = VkExportRow(self.vk_list, self._remove_vk_row,
                           on_path_change=self._detect_senders)
         row.pack(fill="x", pady=4)
@@ -398,15 +423,17 @@ class TaskPanel(ttk.LabelFrame):
         if data:
             row.set(data)
         else:
-            row.label_var.set(f"ВК {len(self.vk_rows)}" if len(self.vk_rows) > 1 else "ВК")
+            row.label_var.set(t("gui.vk_default_label", num=len(self.vk_rows)) if len(self.vk_rows) > 1 else t("gui.vk_default_label", num=""))
 
     def _remove_vk_row(self, row):
+        """Execute the remove vk row operation."""
         if row in self.vk_rows:
             self.vk_rows.remove(row)
             row.destroy()
 
     # ---- TG rows ----
     def _add_tg_row(self, data: dict | None = None):
+        """Execute the add tg row operation."""
         row = TgExportRow(self.tg_list, self._remove_tg_row,
                           on_path_change=self._detect_senders)
         row.pack(fill="x", pady=4)
@@ -415,15 +442,17 @@ class TaskPanel(ttk.LabelFrame):
             row.set(data)
         else:
             n = len(self.tg_rows)
-            row.label_var.set(f"Телеграм {n}" if n > 1 else "Телеграм")
+            row.label_var.set(t("gui.tg_default_label", num=n) if n > 1 else t("gui.tg_default_label", num=""))
 
     def _remove_tg_row(self, row):
+        """Execute the remove tg row operation."""
         if row in self.tg_rows:
             self.tg_rows.remove(row)
             row.destroy()
 
     # ---- Bot rows ----
     def _add_bot_row(self, data: dict | None = None):
+        """Execute the add bot row operation."""
         row = BotRow(self.bot_list, self._remove_bot_row)
         row.pack(fill="x", pady=4)
         self.bot_rows.append(row)
@@ -437,6 +466,7 @@ class TaskPanel(ttk.LabelFrame):
                 row.is_system.set(True)
 
     def _remove_bot_row(self, row):
+        """Execute the remove bot row operation."""
         if row in self.bot_rows:
             self.bot_rows.remove(row)
             row.destroy()
@@ -445,6 +475,7 @@ class TaskPanel(ttk.LabelFrame):
     def _detect_senders(self):
         """Auto-detect sender IDs/names from source files."""
         def work():
+            """Execute the work operation."""
             import vk_parser as vkp
             import tg_parser as tgp
             # VK
@@ -459,8 +490,8 @@ class TaskPanel(ttk.LabelFrame):
                 path = r.get()["path"]
                 if path and os.path.isdir(path):
                     tg_names.update(tgp.extract_sender_names(path))
-            vk_str = f"VK отправители: {', '.join(sorted(vk_ids))}" if vk_ids else ""
-            tg_str = f"TG отправители: {', '.join(sorted(tg_names))}" if tg_names else ""
+            vk_str = t("gui.vk_senders_found", senders=', '.join(sorted(vk_ids))) if vk_ids else ""
+            tg_str = t("gui.tg_senders_found", senders=', '.join(sorted(tg_names))) if tg_names else ""
             self._detected_vk.set(vk_str)
             self._detected_tg.set(tg_str)
 
@@ -497,7 +528,7 @@ class TaskPanel(ttk.LabelFrame):
                 system_bot = key
 
         return {
-            "name": self.name_var.get().strip() or f"Задача {self.task_index + 1}",
+            "name": self.name_var.get().strip() or t("gui.task_default_name", num=self.task_index + 1),
             "mode": self.mode_var.get(),
             "multichat": self.multichat_var.get(),
             "multichat_bot": multichat_bot,
@@ -525,32 +556,40 @@ class TaskPanel(ttk.LabelFrame):
             },
         }
 
-    def from_task(self, t: dict):
+    def from_task(self, task_data: dict):
         """Populate panel from a task dict."""
-        t = normalize_task(t)
-        self.name_var.set(t.get("name", f"Задача {self.task_index + 1}"))
+        task_data = normalize_task(task_data)
+        name = task_data.get("name", t("gui.task_default_name", num=self.task_index + 1))
+        # Dynamically translate the default task name if it matches standard patterns
+        if name.startswith("Задача ") or name.startswith("Task "):
+            try:
+                num = int(name.split(" ")[1])
+                name = t("gui.task_default_name", num=num)
+            except ValueError:
+                pass
+        self.name_var.set(name)
         self.configure(text=self.name_var.get())
-        self.mode_var.set(t.get("mode", MODE_VK_AND_TG))
-        self.multichat_var.set(t.get("multichat", False))
-        self.chat_var.set(str(t["target"]["chat_id"]))
+        self.mode_var.set(task_data.get("mode", MODE_VK_AND_TG))
+        self.multichat_var.set(task_data.get("multichat", False))
+        self.chat_var.set(str(task_data["target"]["chat_id"]))
 
         # VK exports
         for r in list(self.vk_rows):
             self._remove_vk_row(r)
-        for ex in t["sources"].get("vk_exports") or []:
+        for ex in task_data["sources"].get("vk_exports") or []:
             self._add_vk_row(ex)
 
         # TG exports
         for r in list(self.tg_rows):
             self._remove_tg_row(r)
-        for ex in t["sources"].get("telegram_exports") or []:
+        for ex in task_data["sources"].get("telegram_exports") or []:
             self._add_tg_row(ex)
 
         # Bots
         for r in list(self.bot_rows):
             self._remove_bot_row(r)
-        sm = t.get("sender_map", {})
-        dn = t.get("display_names", {})
+        sm = task_data.get("sender_map", {})
+        dn = task_data.get("display_names", {})
         vk_map_inv: dict[str, list[str]] = {}
         for vid, bkey in (sm.get("vk") or {}).items():
             vk_map_inv.setdefault(bkey, []).append(str(vid))
@@ -558,26 +597,26 @@ class TaskPanel(ttk.LabelFrame):
         for tname, bkey in (sm.get("telegram") or {}).items():
             tg_map_inv.setdefault(bkey, []).append(tname)
 
-        for key, token in (t.get("bots") or {}).items():
+        for key, token in (task_data.get("bots") or {}).items():
             self._add_bot_row({
                 "key": key,
                 "token": token,
                 "display_name": dn.get(key, ""),
                 "vk_ids": vk_map_inv.get(key, []),
                 "tg_names": tg_map_inv.get(key, []),
-                "is_system": key == t.get("system_bot", ""),
+                "is_system": key == task_data.get("system_bot", ""),
                 "is_default": key == sm.get("vk_default", "") or key == sm.get("telegram_default", ""),
             })
 
         # Attachments
-        af = t.get("attachments_filter") or {}
+        af = task_data.get("attachments_filter") or {}
         for k, v in self.att_vars.items():
             v.set(af.get(k, True))
 
         # Rate & behavior
-        self.delay_var.set(str(t["rate"].get("min_interval_seconds", 1.5)))
-        self.send_attempts_var.set(str(t["retry"].get("send_media_attempts", 6)))
-        beh = t.get("behavior", {})
+        self.delay_var.set(str(task_data["rate"].get("min_interval_seconds", 1.5)))
+        self.send_attempts_var.set(str(task_data["retry"].get("send_media_attempts", 6)))
+        beh = task_data.get("behavior", {})
         self.date_hdr.set(beh.get("send_date_headers", True))
         self.sect_hdr.set(beh.get("send_section_headers", True))
         self.placeholders.set(beh.get("placeholders_for_missing", True))
@@ -588,7 +627,9 @@ class TaskPanel(ttk.LabelFrame):
 # ---------------------------------------------------------------------------
 
 class App:
+    """Execute the App operation."""
     def __init__(self, root: tk.Tk):
+        """Initialize the instance."""
         self.root = root
         self.worker: threading.Thread | None = None
         self.verify_proc: subprocess.Popen | None = None
@@ -621,13 +662,32 @@ class App:
                 pass
 
         self._style()
+        self._build_ui()
+        self._poll()
+
+    def _build_ui(self):
+        """Build the dynamic language UI components."""
+        if hasattr(self, 'header_frame'):
+            self.header_frame.destroy()
+        if hasattr(self, 'nb'):
+            self.nb.destroy()
+        
+        self.root.title(t("gui.window_title"))
         self._build_header()
         self._build_notebook()
         self._load_from_file()
-        self._poll()
 
+    def _change_lang(self, ev=None):
+        """Handle language switch."""
+        lang = "ru" if self.lang_var.get() == "Русский" else "en"
+        if lang != get_lang():
+            set_lang(lang)
+            s = self._settings_from_ui()
+            self._settings_to_ui(s)
+            self._build_ui()
     # ---- styling ----------------------------------------------------
     def _style(self):
+        """Execute the style operation."""
         s = ttk.Style()
         try:
             s.theme_use("vista")
@@ -644,21 +704,31 @@ class App:
         s.configure("Accent.TButton", font=FONT_BOLD)
 
     def _build_header(self):
-        bar = ttk.Frame(self.root, padding=(12, 10, 12, 4))
-        bar.pack(fill="x")
-        ttk.Label(bar, text="Replay", style="Header.TLabel").pack(side="left")
+        """Execute the build header operation."""
+        self.header_frame = ttk.Frame(self.root, padding=(12, 10, 12, 4))
+        self.header_frame.pack(fill="x")
+        ttk.Label(self.header_frame, text="Replay", style="Header.TLabel").pack(side="left")
         self.var_summary = tk.StringVar(value="")
-        ttk.Label(bar, textvariable=self.var_summary, style="Sub.TLabel").pack(
+        ttk.Label(self.header_frame, textvariable=self.var_summary, style="Sub.TLabel").pack(
             side="left", padx=(12, 0))
+            
+        # Language switcher
+        self.lang_var = tk.StringVar(value="Русский" if get_lang() == "ru" else "English")
+        lang_cb = ttk.Combobox(self.header_frame, textvariable=self.lang_var, 
+                               values=["Русский", "English"], 
+                               state="readonly", width=10)
+        lang_cb.pack(side="right")
+        lang_cb.bind("<<ComboboxSelected>>", self._change_lang)
 
     def _build_notebook(self):
+        """Execute the build notebook operation."""
         self.nb = ttk.Notebook(self.root)
         self.nb.pack(fill="both", expand=True, padx=8, pady=(0, 8))
 
         self.tab_run = ttk.Frame(self.nb, padding=8)
         self.tab_cfg = ttk.Frame(self.nb, padding=8)
-        self.nb.add(self.tab_run, text="  ▶ Запуск  ")
-        self.nb.add(self.tab_cfg, text="  ⚙ Настройки  ")
+        self.nb.add(self.tab_run, text=t("gui.tab_run"))
+        self.nb.add(self.tab_cfg, text=t("gui.tab_settings"))
 
         self._build_run_tab()
         self._build_settings_tab()
@@ -666,9 +736,10 @@ class App:
     # ---- Run tab ----------------------------------------------------
     def _build_run_tab(self):
         # Task selector
+        """Execute the build run tab operation."""
         sel = ttk.Frame(self.tab_run)
         sel.pack(fill="x", pady=(0, 6))
-        ttk.Label(sel, text="Задача:").pack(side="left")
+        ttk.Label(sel, text=t("gui.task_label")).pack(side="left")
         self.task_combo = ttk.Combobox(sel, state="readonly", width=30)
         self.task_combo.pack(side="left", padx=8)
         self.task_combo.bind("<<ComboboxSelected>>", self._on_task_selected)
@@ -676,24 +747,24 @@ class App:
         # Controls
         ctrl = ttk.Frame(self.tab_run)
         ctrl.pack(fill="x", pady=(0, 8))
-        self.btn_start = ttk.Button(ctrl, text="▶ Старт", style="Accent.TButton",
+        self.btn_start = ttk.Button(ctrl, text=t("gui.btn_start"), style="Accent.TButton",
                                     command=self.on_start)
         self.btn_start.pack(side="left", padx=(0, 6))
-        self.btn_pause = ttk.Button(ctrl, text="⏸ Пауза", command=self.on_pause, state="disabled")
-        self.btn_skip = ttk.Button(ctrl, text="⏭ Пропустить", command=self.on_skip, state="disabled")
-        self.btn_stop = ttk.Button(ctrl, text="⏹ Стоп", command=self.on_stop, state="disabled")
+        self.btn_pause = ttk.Button(ctrl, text=t("gui.btn_pause"), command=self.on_pause, state="disabled")
+        self.btn_skip = ttk.Button(ctrl, text=t("gui.btn_skip"), command=self.on_skip, state="disabled")
+        self.btn_stop = ttk.Button(ctrl, text=t("gui.btn_stop"), command=self.on_stop, state="disabled")
         for b in (self.btn_pause, self.btn_skip, self.btn_stop):
             b.pack(side="left", padx=4)
         ttk.Separator(ctrl, orient="vertical").pack(side="left", fill="y", padx=10, pady=2)
-        ttk.Button(ctrl, text="🧪 Тест", command=self.on_verify).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="🚨 Ошибки", command=self.on_errors).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="📄 Лог", command=self.on_open_log).pack(side="left", padx=4)
+        ttk.Button(ctrl, text=t("gui.btn_test"), command=self.on_verify).pack(side="left", padx=4)
+        ttk.Button(ctrl, text=t("gui.btn_errors"), command=self.on_errors).pack(side="left", padx=4)
+        ttk.Button(ctrl, text=t("gui.btn_log"), command=self.on_open_log).pack(side="left", padx=4)
         self.reset_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(ctrl, text="Начать заново", variable=self.reset_var).pack(
+        ttk.Checkbutton(ctrl, text=t("gui.btn_reset"), variable=self.reset_var).pack(
             side="right", padx=4)
 
         # Progress
-        pf = ttk.LabelFrame(self.tab_run, text="Прогресс", padding=8)
+        pf = ttk.LabelFrame(self.tab_run, text=t("gui.frame_progress"), padding=8)
         pf.pack(fill="x", pady=4)
         self.pbar = ttk.Progressbar(pf, mode="determinate", maximum=100)
         self.pbar.pack(fill="x", pady=(0, 6))
@@ -701,24 +772,24 @@ class App:
         self.lbl_prog.pack(anchor="w")
         row = ttk.Frame(pf)
         row.pack(fill="x", pady=6)
-        self.var_phase = tk.StringVar(value="Фаза: —")
-        self.var_elapsed = tk.StringVar(value="Прошло: —")
-        self.var_eta = tk.StringVar(value="Осталось: —")
-        self.var_rate = tk.StringVar(value="Скорость: —")
+        self.var_phase = tk.StringVar(value=t("gui.lbl_phase") + " —")
+        self.var_elapsed = tk.StringVar(value=t("gui.lbl_elapsed") + " —")
+        self.var_eta = tk.StringVar(value=t("gui.lbl_eta") + " —")
+        self.var_rate = tk.StringVar(value=t("gui.lbl_rate") + " —")
         for i, v in enumerate((self.var_phase, self.var_elapsed, self.var_eta, self.var_rate)):
             ttk.Label(row, textvariable=v).grid(row=0, column=i, sticky="w", padx=(0, 16))
-        self.var_current = tk.StringVar(value="Текущее: —")
+        self.var_current = tk.StringVar(value=t("gui.lbl_current") + " —")
         ttk.Label(pf, textvariable=self.var_current, foreground="#444").pack(anchor="w")
-        self.var_file = tk.StringVar(value="Файл: —")
+        self.var_file = tk.StringVar(value=t("gui.lbl_file") + " —")
         ttk.Label(pf, textvariable=self.var_file, foreground="#777").pack(anchor="w", pady=(0, 4))
         sub = ttk.Frame(pf)
         sub.pack(fill="x")
-        ttk.Label(sub, text="ВК:", width=4).grid(row=0, column=0, sticky="w")
+        ttk.Label(sub, text=t("gui.lbl_vk"), width=4).grid(row=0, column=0, sticky="w")
         self.vk_bar = ttk.Progressbar(sub, maximum=100)
         self.vk_bar.grid(row=0, column=1, sticky="ew", padx=6)
         self.var_vk = tk.StringVar(value="0 / 0")
         ttk.Label(sub, textvariable=self.var_vk, width=14).grid(row=0, column=2)
-        ttk.Label(sub, text="ТГ:", width=4).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        ttk.Label(sub, text=t("gui.lbl_tg"), width=4).grid(row=1, column=0, sticky="w", pady=(4, 0))
         self.tg_bar = ttk.Progressbar(sub, maximum=100)
         self.tg_bar.grid(row=1, column=1, sticky="ew", padx=6, pady=(4, 0))
         self.var_tg = tk.StringVar(value="0 / 0")
@@ -729,14 +800,14 @@ class App:
         mid = ttk.Panedwindow(self.tab_run, orient="vertical")
         mid.pack(fill="both", expand=True, pady=4)
 
-        stats_f = ttk.LabelFrame(mid, text="Статистика", padding=6)
+        stats_f = ttk.LabelFrame(mid, text=t("gui.frame_stats"), padding=6)
         mid.add(stats_f, weight=1)
         self.stat_vars: dict[str, tk.StringVar] = {}
         items = [
-            ("text", "Текст"), ("photo", "Фото"), ("sticker", "Стикеры"),
-            ("voice", "Голос"), ("video", "Видео"), ("document", "Файлы"),
-            ("header", "Заголовки"), ("placeholders", "Заглушки"),
-            ("skipped", "Пропуск"), ("errors", "Ошибки"), ("retries", "Повторы"),
+            ("text", t("gui.stat_text")), ("photo", t("gui.stat_photo")), ("sticker", t("gui.stat_sticker")),
+            ("voice", t("gui.stat_voice")), ("video", t("gui.stat_video")), ("document", t("gui.stat_document")),
+            ("header", t("gui.stat_header")), ("placeholders", t("gui.stat_placeholders")),
+            ("skipped", t("gui.stat_skipped")), ("errors", t("gui.stat_errors")), ("retries", t("gui.stat_retries")),
         ]
         grid = ttk.Frame(stats_f)
         grid.pack(fill="x")
@@ -752,12 +823,12 @@ class App:
         ttk.Label(stats_f, textvariable=self.var_lasterr, foreground="#b00000").pack(
             anchor="w", pady=(4, 0))
 
-        res_f = ttk.LabelFrame(mid, text="Ресурсы", padding=6)
+        res_f = ttk.LabelFrame(mid, text=t("gui.frame_resources"), padding=6)
         mid.add(res_f, weight=0)
         self.res_vars: dict[str, tk.StringVar] = {}
         res_items = [
-            ("ram", "RAM"), ("cpu", "CPU"), ("threads", "Потоки"),
-            ("downloads", "Загрузок"), ("flood", "429"),
+            ("ram", "RAM"), ("cpu", "CPU"), ("threads", t("gui.res_threads")),
+            ("downloads", t("gui.res_downloads")), ("flood", "429"),
         ]
         rg = ttk.Frame(res_f)
         rg.pack(fill="x")
@@ -770,7 +841,7 @@ class App:
             ttk.Label(cell, text=label, foreground="#666").pack(anchor="w")
 
         # Log
-        lf = ttk.LabelFrame(self.tab_run, text="Журнал", padding=4)
+        lf = ttk.LabelFrame(self.tab_run, text=t("gui.frame_log"), padding=4)
         lf.pack(fill="both", expand=True, pady=(4, 0))
         self.txt = tk.Text(lf, height=8, wrap="word", state="disabled",
                            font=("Consolas", 9), background=LOG_BG, foreground=LOG_FG,
@@ -782,6 +853,7 @@ class App:
 
     # ---- Settings tab -----------------------------------------------
     def _build_settings_tab(self):
+        """Execute the build settings tab operation."""
         outer = ttk.Frame(self.tab_cfg)
         outer.pack(fill="both", expand=True)
 
@@ -807,20 +879,21 @@ class App:
         # Add task + action buttons
         bf = ttk.Frame(self.cfg_body)
         bf.pack(fill="x", pady=8)
-        ttk.Button(bf, text="+ Добавить задачу",
+        ttk.Button(bf, text=t("gui.add_task_btn"),
                    command=self._add_task_panel).pack(side="left", padx=(0, 16))
         ttk.Separator(bf, orient="vertical").pack(side="left", fill="y", padx=4, pady=2)
-        ttk.Button(bf, text="💾 Сохранить настройки", style="Accent.TButton",
+        ttk.Button(bf, text=t("gui.save_settings_btn"), style="Accent.TButton",
                    command=self.on_save_settings).pack(side="left", padx=8)
-        ttk.Button(bf, text="↻ Перезагрузить из файла",
+        ttk.Button(bf, text=t("gui.reload_settings_btn"),
                    command=self._load_from_file).pack(side="left", padx=4)
-        ttk.Button(bf, text="📂 Открыть settings.json",
+        ttk.Button(bf, text=t("gui.open_settings_btn"),
                    command=self.on_open_settings).pack(side="left", padx=4)
-        ttk.Button(bf, text="🔍 Проверить пути",
+        ttk.Button(bf, text=t("gui.validate_paths_btn"),
                    command=self.on_validate).pack(side="left", padx=4)
 
     # ---- Task panel management ----
     def _add_task_panel(self, task_data: dict | None = None) -> TaskPanel:
+        """Execute the add task panel operation."""
         idx = len(self.task_panels)
         panel = TaskPanel(self.tasks_frame, idx, self._remove_task_panel,
                           self._on_detect_senders)
@@ -832,8 +905,9 @@ class App:
         return panel
 
     def _remove_task_panel(self, panel: TaskPanel):
+        """Execute the remove task panel operation."""
         if len(self.task_panels) <= 1:
-            messagebox.showinfo("Задачи", "Нельзя удалить единственную задачу.")
+            messagebox.showinfo(t("gui.msg_tasks_title"), t("gui.msg_cannot_delete_last"))
             return
         if panel in self.task_panels:
             self.task_panels.remove(panel)
@@ -844,10 +918,12 @@ class App:
             self._update_task_combo()
 
     def _on_detect_senders(self, panel: TaskPanel = None):
+        """Handle the detect senders event."""
         pass  # Detection happens inside TaskPanel
 
     def _update_task_combo(self):
-        names = [p.name_var.get() or f"Задача {i + 1}"
+        """Execute the update task combo operation."""
+        names = [p.name_var.get() or t("gui.task_default_name", num=i + 1)
                  for i, p in enumerate(self.task_panels)]
         self.task_combo["values"] = names
         if names:
@@ -856,6 +932,7 @@ class App:
             self.active_task_idx = idx
 
     def _on_task_selected(self, event=None):
+        """Handle the task selected event."""
         self.active_task_idx = self.task_combo.current()
 
     # ---- settings I/O -----------------------------------------------
@@ -904,17 +981,19 @@ class App:
         self.var_summary.set(settings_summary(s))
 
     def _load_from_file(self):
+        """Execute the load from file operation."""
         try:
             s = load_settings()
             self._settings_to_ui(s)
             # Apply first task
             if s["tasks"]:
                 apply_task(s["tasks"][0], 0)
-            self.log("Настройки загружены из settings.json")
+            self.log(t("gui.msg_settings_loaded"))
         except Exception as e:  # noqa: BLE001
-            messagebox.showerror("Ошибка", f"Не удалось загрузить settings.json:\n{e}")
+            messagebox.showerror(t("gui.msg_error_title"), t("gui.msg_settings_load_err", err=e))
 
     def on_save_settings(self):
+        """Handle the save settings event."""
         try:
             s = self._settings_from_ui()
             # Validate all tasks
@@ -922,49 +1001,53 @@ class App:
             for i, t in enumerate(s.get("tasks", [])):
                 errs = validate_task(t)
                 if errs:
-                    name = t.get("name", f"Задача {i + 1}")
+                    name = t.get("name", t("gui.task_default_name", num=i + 1))
                     all_errs.extend(f"[{name}] {e}" for e in errs)
             if all_errs:
                 messagebox.showwarning(
-                    "Проверка",
-                    "Сохранено, но есть замечания:\n\n" + "\n".join(f"• {e}" for e in all_errs))
+                    t("gui.msg_check_title"),
+                    t("gui.msg_saved_warnings") + "\n\n" + "\n".join(f"• {e}" for e in all_errs))
             path = save_settings(s)
             # Re-apply active task
             tasks = s.get("tasks", [])
             if self.active_task_idx < len(tasks):
                 apply_task(tasks[self.active_task_idx], self.active_task_idx)
             self.var_summary.set(settings_summary(s))
-            self.log(f"Настройки сохранены: {path}")
-            messagebox.showinfo("Сохранено", f"Настройки записаны в\n{path}")
+            self.log(t("gui.msg_settings_saved_log", path=path))
+            messagebox.showinfo(t("gui.msg_saved_title"), t("gui.msg_settings_saved", path=path))
         except Exception as e:  # noqa: BLE001
-            messagebox.showerror("Ошибка", str(e))
+            messagebox.showerror(t("gui.msg_error_title"), str(e))
 
     def on_validate(self):
+        """Handle the validate event."""
         s = self._settings_from_ui()
         all_errs = []
         for i, t in enumerate(s.get("tasks", [])):
             errs = validate_task(t)
-            name = t.get("name", f"Задача {i + 1}")
+            name = t.get("name", t("gui.task_default_name", num=i + 1))
             all_errs.extend(f"[{name}] {e}" for e in errs)
         if all_errs:
-            messagebox.showwarning("Проверка", "\n".join(f"• {e}" for e in all_errs))
+            messagebox.showwarning(t("gui.msg_check_title"), "\n".join(f"• {e}" for e in all_errs))
         else:
-            messagebox.showinfo("Проверка", "Все пути и параметры в порядке ✓")
+            messagebox.showinfo(t("gui.msg_check_title"), "Все пути и параметры в порядке ✓")
 
     def on_open_settings(self):
+        """Handle the open settings event."""
         path = SETTINGS_FILE
         if not os.path.isfile(path):
             save_settings(default_settings(), path)
         try:
             os.startfile(path)  # type: ignore[attr-defined]
         except Exception:
-            messagebox.showinfo("Файл", path)
+            messagebox.showinfo(t("gui.msg_file_title"), path)
 
     # ---- logging ----------------------------------------------------
     def log(self, msg: str):
+        """Execute the log operation."""
         self.logq.put(msg)
 
     def _drain_log(self):
+        """Execute the drain log operation."""
         appended = False
         while True:
             try:
@@ -980,42 +1063,41 @@ class App:
 
     # ---- run actions ------------------------------------------------
     def on_start(self):
+        """Handle the start event."""
         if self.worker and self.worker.is_alive():
             return
         s = self._settings_from_ui()
         tasks = s.get("tasks", [])
         idx = self.active_task_idx
         if idx >= len(tasks):
-            messagebox.showerror("Ошибка", "Не выбрана задача.")
+            messagebox.showerror(t("gui.msg_error_title"), t("gui.msg_no_task_selected"))
             return
         task = tasks[idx]
         errs = validate_task(task)
         if errs:
             if not messagebox.askyesno(
-                    "Предупреждение",
-                    "Есть проблемы с настройками:\n\n"
-                    + "\n".join(f"• {e}" for e in errs)
-                    + "\n\nВсё равно запустить?"):
+                    t("gui.msg_warn_title"), t("gui.msg_settings_issues") + "\n\n" + "\n".join(f"• {e}" for e in errs) + "\n\n" + t("gui.msg_run_anyway")):
                 return
         try:
             save_settings(s)
             apply_task(task, idx)
             self.var_summary.set(settings_summary(s))
         except Exception as e:  # noqa: BLE001
-            messagebox.showerror("Ошибка", str(e))
+            messagebox.showerror(t("gui.msg_error_title"), str(e))
             return
 
         reset = self.reset_var.get()
         self._set_running(True)
-        name = task.get("name", f"Задача {idx + 1}")
-        self.log(f"=== Запуск: {name} ===")
+        name = task.get("name", t("gui.task_default_name", num=idx + 1))
+        self.log(t("gui.log_start", name=name))
         self.log(task_summary(task))
 
         def work():
+            """Execute the work operation."""
             try:
                 run_export.run(reset=reset, log=self.log)
             except Exception as e:  # noqa: BLE001
-                self.log(f"!!! Критическая ошибка: {e}")
+                self.log(t("gui.log_critical_err", err=e))
             finally:
                 self.root.after(0, lambda: self._set_running(False))
 
@@ -1023,25 +1105,29 @@ class App:
         self.worker.start()
 
     def on_pause(self):
+        """Handle the pause event."""
         if CONTROL.is_paused():
             CONTROL.resume()
-            self.btn_pause.config(text="⏸ Пауза")
-            self.log("Продолжено.")
+            self.btn_pause.config(text=t("gui.btn_pause"))
+            self.log(t("gui.log_resumed"))
         else:
             CONTROL.pause()
-            self.btn_pause.config(text="▶ Продолжить")
-            self.log("Пауза.")
+            self.btn_pause.config(text=t("gui.btn_resume"))
+            self.log(t("gui.log_paused"))
 
     def on_skip(self):
+        """Handle the skip event."""
         CONTROL.request_skip()
-        self.log("Запрошен пропуск…")
+        self.log(t("gui.log_skip_req"))
 
     def on_stop(self):
-        if messagebox.askyesno("Стоп", "Остановить? Прогресс сохранится."):
+        """Handle the stop event."""
+        if messagebox.askyesno(t("gui.msg_stop_title"), t("gui.msg_stop_confirm")):
             CONTROL.request_stop()
-            self.log("Остановка…")
+            self.log(t("gui.log_stop_req"))
 
     def on_verify(self):
+        """Handle the verify event."""
         if self.verify_proc and self.verify_proc.poll() is None:
             return
         # Apply active task first
@@ -1050,10 +1136,11 @@ class App:
         idx = self.active_task_idx
         if idx < len(tasks):
             apply_task(tasks[idx], idx)
-        self.log("=== Тест вложений ===")
+        self.log(t("gui.log_verify"))
         env = dict(os.environ, PYTHONIOENCODING="utf-8")
 
         def work():
+            """Execute the work operation."""
             try:
                 self.verify_proc = subprocess.Popen(
                     [sys.executable, os.path.join(os.path.dirname(__file__), "verify.py")],
@@ -1067,30 +1154,32 @@ class App:
         threading.Thread(target=work, daemon=True).start()
 
     def on_open_log(self):
+        """Handle the open log event."""
         try:
             os.startfile(config.LOG_FILE)  # type: ignore[attr-defined]
         except Exception:
-            messagebox.showinfo("Лог", config.LOG_FILE)
+            messagebox.showinfo(t("gui.msg_log_title"), config.LOG_FILE)
 
     # ---- error window -----------------------------------------------
     def on_errors(self):
+        """Handle the errors event."""
         if self.err_win is not None and tk.Toplevel.winfo_exists(self.err_win):
             self.err_win.deiconify()
             self.err_win.lift()
             return
         win = tk.Toplevel(self.root)
-        win.title("Ошибки и события")
+        win.title(t("gui.err_win_title"))
         win.geometry("760x420")
         self.err_win = win
         top = ttk.Frame(win, padding=8)
         top.pack(fill="x")
         self.err_count_var = tk.StringVar(value="0")
         ttk.Label(top, textvariable=self.err_count_var, font=FONT_BOLD).pack(side="left")
-        ttk.Button(top, text="Очистить", command=self._clear_error_window).pack(side="right")
+        ttk.Button(top, text=t("gui.btn_clear"), command=self._clear_error_window).pack(side="right")
         cols = ("time", "type", "msg")
         tree = ttk.Treeview(win, columns=cols, show="headings")
         for c, w in (("time", 160), ("type", 80), ("msg", 480)):
-            tree.heading(c, text={"time": "Время", "type": "Тип", "msg": "Сообщение"}[c])
+            tree.heading(c, text={"time": t("gui.err_col_time"), "type": t("gui.err_col_type"), "msg": t("gui.err_col_msg")}[c])
             tree.column(c, width=w, anchor="w")
         sb = ttk.Scrollbar(win, command=tree.yview)
         tree.configure(yscrollcommand=sb.set)
@@ -1104,12 +1193,14 @@ class App:
         self._refresh_error_window()
 
     def _clear_error_window(self):
+        """Execute the clear error window operation."""
         if self.err_tree:
             for iid in self.err_tree.get_children():
                 self.err_tree.delete(iid)
         self.err_shown = 0
 
     def _refresh_error_window(self):
+        """Execute the refresh error window operation."""
         if self.err_win is None or not tk.Toplevel.winfo_exists(self.err_win):
             self.err_win = None
             self.err_tree = None
@@ -1122,9 +1213,10 @@ class App:
             tree = self.err_tree
             tree.insert("", 0, values=(ts, ev["level"], ev["msg"]), tags=(ev["level"],))
         self.err_shown = len(evs)
-        self.err_count_var.set(f"Событий: {len(evs)}")
+        self.err_count_var.set(t("gui.err_count", count=len(evs)))
 
     def _set_running(self, running: bool):
+        """Configure the running."""
         self.btn_start.config(state="disabled" if running else "normal")
         self.btn_pause.config(state="normal" if running else "disabled")
         self.btn_skip.config(state="normal" if running else "disabled")
@@ -1132,22 +1224,23 @@ class App:
         # Don't lock the settings tab — allow editing other tasks while running
         self.task_combo.config(state="disabled" if running else "readonly")
         if not running:
-            self.btn_pause.config(text="⏸ Пауза")
+            self.btn_pause.config(text=t("gui.btn_pause"))
 
     def _poll(self):
+        """Execute the poll operation."""
         self._drain_log()
         s = CONTROL.stats.snapshot()
         total, idx = s["total"], s["index"]
         pct = (idx / total * 100) if total else 0
         self.pbar.config(maximum=max(1, total), value=idx)
         self.lbl_prog.config(text=f"{idx:,} / {total:,} ({pct:.1f}%)".replace(",", " "))
-        self.var_phase.set(f"Фаза: {s['phase']}")
-        self.var_elapsed.set(f"Прошло: {fmt_dur(s['elapsed'])}")
-        self.var_eta.set(f"Осталось: {fmt_dur(s['eta'])}")
-        self.var_rate.set(f"Скорость: {s['rate'] * 60:.0f}/мин")
-        self.var_current.set(f"Текущее: {s['current']}")
+        self.var_phase.set(f"{t('gui.lbl_phase')} {s['phase']}")
+        self.var_elapsed.set(f"{t('gui.lbl_elapsed')} {fmt_dur(s['elapsed'])}")
+        self.var_eta.set(f"{t('gui.lbl_eta')} {fmt_dur(s['eta'])}")
+        self.var_rate.set(t("gui.rate_fmt", rate=s['rate'] * 60))
+        self.var_current.set(f"{t('gui.lbl_current')} {s['current']}")
         cf = s.get("current_file") or "—"
-        self.var_file.set(f"Файл: {cf}  ({s.get('current_kind', '')})")
+        self.var_file.set(f"{t('gui.lbl_file')} {cf}  ({s.get('current_kind', '')})")
         vt, vd = s.get("vk_total", 0), s.get("vk_done", 0)
         tt, td = s.get("tg_total", 0), s.get("tg_done", 0)
         self.vk_bar.config(maximum=max(1, vt), value=vd)
@@ -1176,6 +1269,7 @@ class App:
 
 
 def main():
+    """Execute the main operation."""
     root = tk.Tk()
     App(root)
     root.mainloop()

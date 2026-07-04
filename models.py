@@ -18,6 +18,7 @@ GIFT = "gift"                 # VK gift -> sendSticker + label
 
 @dataclass
 class Attachment:
+    """Execute the Attachment operation."""
     kind: str
     # Source of the binary, in priority order: a local file, a URL we download,
     # or nothing (then `note` is used as a placeholder).
@@ -41,6 +42,7 @@ class Attachment:
 
 @dataclass
 class Event:
+    """Execute the Event operation."""
     source: str               # "vk" | "tg"
     sender: str               # bot key (arbitrary, e.g. "bot1", "bot2")
     date: int                 # unix timestamp (0 if unknown)
@@ -48,7 +50,7 @@ class Event:
     attachments: list = field(default_factory=list)  # list[Attachment]
     # Human-readable date string for day headers (from the export when available).
     day_label: str = ""
-    # Which source chat this event came from (e.g. "Телеграм 2"); for the GUI.
+    
     chat_label: str = ""
     # Display name of the sender for multichat mode prefix.
     sender_display_name: str = ""

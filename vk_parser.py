@@ -39,6 +39,7 @@ def _photo_local_or_url(photo: dict) -> tuple[str | None, str]:
 
 
 def _sticker_url(st: dict) -> str:
+    """Execute the sticker url operation."""
     for k in ("photo_512", "photo_352", "photo_256", "photo_128", "photo_64"):
         if st.get(k):
             return st[k]
@@ -153,6 +154,7 @@ def _parse_attachment(att: dict) -> tuple[list[Attachment], str]:
 
 
 def _collect(msg: dict) -> tuple[list[Attachment], list[str]]:
+    """Execute the collect operation."""
     atts: list[Attachment] = []
     notes: list[str] = []
     for att in msg.get("attachments", []) or []:

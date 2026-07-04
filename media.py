@@ -35,6 +35,7 @@ _FFMPEG = None
 
 
 def _ffmpeg() -> str | None:
+    """Execute the ffmpeg operation."""
     global _FFMPEG
     if _FFMPEG is None:
         try:
@@ -49,6 +50,7 @@ _session.headers.update({"User-Agent": config.HTTP_UA})
 
 
 def _cache_path(key: str, ext: str) -> str:
+    """Execute the cache path operation."""
     os.makedirs(config.CACHE_DIR, exist_ok=True)
     h = hashlib.sha1(key.encode("utf-8")).hexdigest()[:20]
     return os.path.join(config.CACHE_DIR, f"{h}.{ext.lstrip('.')}")

@@ -34,6 +34,7 @@ _TAG_RE = re.compile(r'<[^>]+>')
 
 
 def _fmt_call_duration(sec: int) -> str:
+    """Execute the fmt call duration operation."""
     h, rem = divmod(sec, 3600)
     m, s = divmod(rem, 60)
     parts = []
@@ -90,10 +91,12 @@ def _format_call(block: str) -> str:
 
 
 def _html_to_text(html: str) -> str:
+    """Execute the html to text operation."""
     html = _EMOJI_RE.sub(lambda m: m.group(1), html)
     html = re.sub(r'<br\s*/?>', '\n', html)
 
     def _a(m):
+        """Execute the a operation."""
         href, inner = m.group(1), _TAG_RE.sub('', m.group(2))
         inner = unescape(inner).strip()
         href = unescape(href).strip()
@@ -107,15 +110,18 @@ def _html_to_text(html: str) -> str:
 
 def _clean_name(raw: str) -> str:
     # Forwarded channel names carry a trailing <span class="date ...">; strip it.
+    """Execute the clean name operation."""
     raw = re.split(r'<span', raw)[0]
     return unescape(_TAG_RE.sub('', raw)).strip()
 
 
 def _ext(name: str) -> str:
+    """Execute the ext operation."""
     return os.path.splitext(name)[1].lower().lstrip('.')
 
 
 def _media_from_anchor(classes: str, href: str, inner: str, tg_dir: str) -> Attachment:
+    """Execute the media from anchor operation."""
     href = unescape(href)
     folder = href.split('/')[0] if '/' in href else ''
     name = href.split('/')[-1]
@@ -177,6 +183,7 @@ def _media_from_anchor(classes: str, href: str, inner: str, tg_dir: str) -> Atta
 
 
 def _file_index(path: str) -> int:
+    """Execute the file index operation."""
     base = os.path.basename(path)
     m = re.search(r'messages(\d*)\.html', base)
     if not m:
@@ -185,6 +192,7 @@ def _file_index(path: str) -> int:
 
 
 def parse(tg_dir: str | None = None) -> list[Event]:
+    """Execute the parse operation."""
     tg_dir = tg_dir or config.TG_DIR
     files = sorted(glob.glob(os.path.join(tg_dir, 'messages*.html')),
                    key=_file_index)

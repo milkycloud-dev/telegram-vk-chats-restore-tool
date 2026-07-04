@@ -24,11 +24,13 @@ os.makedirs(SAMPLES, exist_ok=True)
 
 
 def _ffmpeg() -> str:
+    """Execute the ffmpeg operation."""
     import imageio_ffmpeg
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 
 def _run(args) -> bool:
+    """Execute the run operation."""
     try:
         subprocess.run([_ffmpeg(), "-y", "-loglevel", "error", *args],
                        check=True)
@@ -39,6 +41,7 @@ def _run(args) -> bool:
 
 
 def make_png() -> str:
+    """Execute the make png operation."""
     p = os.path.join(SAMPLES, "photo.png")
     img = Image.new("RGB", (600, 400), (40, 90, 160))
     d = ImageDraw.Draw(img)
@@ -49,6 +52,7 @@ def make_png() -> str:
 
 
 def make_gif() -> str:
+    """Execute the make gif operation."""
     p = os.path.join(SAMPLES, "anim.gif")
     frames = []
     for i in range(12):
@@ -74,6 +78,7 @@ def make_sticker_webp() -> str:
 
 
 def make_mp3() -> str | None:
+    """Execute the make mp3 operation."""
     p = os.path.join(SAMPLES, "audio.mp3")
     ok = _run(["-f", "lavfi", "-i", "sine=frequency=440:duration=2",
                "-q:a", "9", p])
@@ -81,6 +86,7 @@ def make_mp3() -> str | None:
 
 
 def make_voice_ogg() -> str | None:
+    """Execute the make voice ogg operation."""
     p = os.path.join(SAMPLES, "voice.ogg")
     ok = _run(["-f", "lavfi", "-i", "sine=frequency=600:duration=2",
                "-c:a", "libopus", "-b:a", "32k", p])
@@ -88,6 +94,7 @@ def make_voice_ogg() -> str | None:
 
 
 def make_mp4() -> str | None:
+    """Execute the make mp4 operation."""
     p = os.path.join(SAMPLES, "video.mp4")
     ok = _run(["-f", "lavfi", "-i", "testsrc=size=320x240:rate=15:duration=2",
                "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
@@ -97,6 +104,7 @@ def make_mp4() -> str | None:
 
 
 def make_video_note() -> str | None:
+    """Execute the make video note operation."""
     p = os.path.join(SAMPLES, "note.mp4")
     ok = _run(["-f", "lavfi", "-i", "testsrc=size=240x240:rate=15:duration=2",
                "-c:v", "libx264", "-pix_fmt", "yuv420p", p])
@@ -139,9 +147,11 @@ def _get_bots():
 
 
 def main():
+    """Execute the main operation."""
     results = []
 
     def step(name, fn):
+        """Execute the step operation."""
         try:
             fn()
             results.append((name, "OK"))
@@ -169,6 +179,7 @@ def main():
 
     # 2. sticker as a non-clickable image (the key requirement)
     def _sticker():
+        """Execute the sticker operation."""
         path = media.to_sticker_webp(sticker_url) if sticker_url else None
         if not path:
             path = make_sticker_webp()
@@ -180,6 +191,7 @@ def main():
 
     # 2b. real Telegram animated stickers (.tgs Lottie and .webm video sticker)
     def _pick(folder, ext):
+        """Execute the pick operation."""
         if not config.TG_DIR:
             return None
         for p in sorted(glob.glob(os.path.join(config.TG_DIR, folder, "*" + ext))):
@@ -188,6 +200,7 @@ def main():
         return None
 
     def _tgs():
+        """Execute the tgs operation."""
         p = _pick("stickers", ".tgs")
         if not p:
             raise RuntimeError("no .tgs sticker in export")
@@ -195,6 +208,7 @@ def main():
     step("sticker (TG .tgs animated)", _tgs)
 
     def _webm():
+        """Execute the webm operation."""
         p = _pick("video_files", ".webm")
         if not p:
             raise RuntimeError("no .webm sticker in export")
@@ -203,6 +217,7 @@ def main():
 
     # 3. real VK photo (download + upload)
     def _vkphoto():
+        """Execute the vkphoto operation."""
         if not photo_url:
             raise RuntimeError("no VK photo url found")
         p = media.download(photo_url, "jpg")
@@ -219,6 +234,7 @@ def main():
 
     # 6. voice message
     def _voice():
+        """Execute the voice operation."""
         p = make_voice_ogg()
         if not p:
             raise RuntimeError("ffmpeg could not make ogg/opus")
@@ -227,6 +243,7 @@ def main():
 
     # 7. audio track
     def _audio():
+        """Execute the audio operation."""
         p = make_mp3()
         if not p:
             raise RuntimeError("ffmpeg could not make mp3")
@@ -235,6 +252,7 @@ def main():
 
     # 8. video
     def _video():
+        """Execute the video operation."""
         p = make_mp4()
         if not p:
             raise RuntimeError("ffmpeg could not make mp4")
@@ -243,6 +261,7 @@ def main():
 
     # 9. round video note
     def _note():
+        """Execute the note operation."""
         p = make_video_note()
         if not p:
             raise RuntimeError("ffmpeg could not make note mp4")
@@ -251,6 +270,7 @@ def main():
 
     # 10. document (real file from the Telegram export if present, else generated)
     def _doc():
+        """Execute the doc operation."""
         real = None
         if config.TG_FILES_DIR and os.path.isdir(config.TG_FILES_DIR):
             for f in os.listdir(config.TG_FILES_DIR):
@@ -264,6 +284,7 @@ def main():
 
     # 10b. REAL VK voice message (local mp3 -> opus -> voice bubble)
     def _vkvoice():
+        """Execute the vkvoice operation."""
         if not vk["voice_local"]:
             raise RuntimeError("no local VK voice found")
         ogg = media.mp3_to_opus(vk["voice_local"])
@@ -274,6 +295,7 @@ def main():
 
     # 10c. REAL VK audio track (local mp3)
     def _vkaudio():
+        """Execute the vkaudio operation."""
         if not vk["audio_local"]:
             raise RuntimeError("no local VK audio found")
         bot2.send_audio(vk["audio_local"], "реальное аудио из ВК")

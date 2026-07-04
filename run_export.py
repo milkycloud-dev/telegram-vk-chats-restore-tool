@@ -17,7 +17,7 @@ import vk_parser
 from control import CONTROL, SkipRequested, StopRequested
 from telegram_client import get_bot, TelegramError
 
-# Russian month names in the genitive case, lower-case ("3 июня 2020").
+
 _RU_MONTHS_GEN = {1: "января", 2: "февраля", 3: "марта", 4: "апреля",
                   5: "мая", 6: "июня", 7: "июля", 8: "августа",
                   9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"}
@@ -39,10 +39,12 @@ for _i, _ru in enumerate(["января", "февраля", "марта", "ап�
 
 
 def _ru_date(year: int, month: int, day: int) -> str:
+    """Execute the ru date operation."""
     return f"{day} {_RU_MONTHS_GEN.get(month, '')} {year}".replace("  ", " ").strip()
 
 
 def default_log(msg: str):
+    """Execute the default log operation."""
     line = f"{dt.datetime.now():%H:%M:%S} {msg}"
     print(line, flush=True)
     try:
@@ -53,6 +55,7 @@ def default_log(msg: str):
 
 
 def _vk_day(ts: int) -> str:
+    """Execute the vk day operation."""
     if not ts:
         return ""
     d = dt.datetime.fromtimestamp(ts, dt.UTC)
@@ -147,6 +150,7 @@ def build_actions(log=default_log):
 
 
 def load_state() -> int:
+    """Execute the load state operation."""
     if os.path.exists(config.STATE_FILE):
         try:
             return int(json.load(open(config.STATE_FILE))["index"])
@@ -156,12 +160,14 @@ def load_state() -> int:
 
 
 def save_state(index: int):
+    """Execute the save state operation."""
     tmp = config.STATE_FILE + ".tmp"
     json.dump({"index": index}, open(tmp, "w"))
     os.replace(tmp, config.STATE_FILE)
 
 
 def _event_status(result: dict) -> str:
+    """Execute the event status operation."""
     if result["error"]:
         return "error"
     has_sent = bool(result["sent"]) or result["text"]
@@ -178,12 +184,14 @@ class Ledger:
     """Append-only record of what was sent and what wasn't."""
 
     def __init__(self, reset: bool):
+        """Initialize the instance."""
         mode = "w" if reset else "a"
         self._res = open(config.RESULTS_FILE, mode, encoding="utf-8")
         self._not = open(config.NOT_SENT_FILE, mode, encoding="utf-8")
         self._n = 0
 
     def record(self, i: int, action, result):
+        """Execute the record operation."""
         kind, payload = action
         if kind in ("msg", "date"):
             entry = {"i": i, "t": kind,
@@ -210,10 +218,12 @@ class Ledger:
             self.flush()
 
     def flush(self):
+        """Execute the flush operation."""
         self._res.flush()
         self._not.flush()
 
     def close(self):
+        """Execute the close operation."""
         try:
             self.flush()
             self._res.close()
@@ -344,6 +354,7 @@ def run(actions=None, reset=False, limit=0, log=default_log):
 
 
 def main():
+    """Execute the main operation."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--reset", action="store_true", help="ignore saved progress")
     ap.add_argument("--limit", type=int, default=0, help="send at most N then stop")
