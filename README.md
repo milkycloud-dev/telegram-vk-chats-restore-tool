@@ -2,7 +2,7 @@
   <img src="logo.png" alt="Replay Logo" width="300"/>
 </p>
 
-<h1 align="center">Replay — VK / Telegram → Telegram Restore Tool</h1>
+<h1 align="center">Replay: VK / Telegram to Telegram Restore Tool</h1>
 
 <p align="center">
   <b>A powerful, asynchronous restoration engine that reconstructs exported VKontakte and Telegram chats into a unified Telegram supergroup timeline, intelligently preserving the original multi-user flow.</b>
@@ -15,14 +15,14 @@
 Replay is an advanced CLI/GUI application designed to chronologically stitch and replay fragmented chat histories from different social networks (VK and Telegram) into a single Telegram environment. By simulating multiple participants through individual Telegram bots, Replay ensures that complex conversations spanning years and platforms are preserved with perfect context, sender identity, and precise chronological ordering.
 
 ### Core Capabilities & Technical Features
-- **Multi-task Concurrency**: Configure and execute multiple independent replay operations from a single JSON-based settings schema. The Tkinter-based UI acts as a robust configuration generator and process monitor.
+- **Multi-task Concurrency**: Configure and execute multiple independent replay operations from a single JSON-based settings schema. The Tkinter UI builds the configuration and monitors the running processes.
 - **Dual Source Parsers**: 
   - **VKontakte**: Parses legacy JSON exports from the popular `VkOpt` extension. Recreates nested message hierarchies, forwarded structures, and decodes legacy VK payload mappings.
   - **Telegram**: Parses standard Telegram Desktop HTML exports. Ingests all internal DOM structures to map media paths, nested replies, and sticker payloads correctly.
 - **Smart Sender Inference**: Implements a fuzzy-matching scan mechanism over source directories to detect unique sender IDs and metadata. Automatically creates a sender-to-bot mapping configuration block for immediate use.
 - **Multi-chat Routing**: Allows fallback to a single-bot `[Sender Name]` prefix mode to conserve Telegram bots while maintaining readability across massive groups.
 - **Network Resilience & Backoff Policy**: Built for stability against rate-limits. Dynamically handles Telegram's `429 Flood Wait` exceptions using exponential backoff, guarantees infinite text transmission retries, and enforces bounded (configurable) media upload retries to avoid deadlocks.
-- **Rich Diagnostic UI**: Leverages native threading to prevent UI blocking. Provides live progress bars, granular error logs, resource/thread monitoring, ETA calculations, and on-the-fly bilingual dictionary hot-swapping.
+- **Diagnostic UI**: work runs in background threads, so the UI does not freeze. Live progress bars, detailed error logs, resource/thread monitoring, ETA, and switching between two languages on the fly.
 - **Media Transcoding & Placeholders**: Filters through 9+ types of media (Photos, Stickers, Voice, Audio, Video, Video Notes, GIF, Documents, VK Gifts). Automatically injects descriptive `[Media Placeholder]` text when the original file is missing, corrupted, or unreachable.
 
 ### Installation & Deployment
@@ -37,14 +37,14 @@ Replay is an advanced CLI/GUI application designed to chronologically stitch and
 
 ## Русский
 
-Replay — это мощный асинхронный инструмент восстановления, предназначенный для объединения и воспроизведения фрагментированной истории чатов из разных социальных сетей (ВКонтакте и Telegram) в единую хронологическую ленту Telegram-супергруппы. Имитируя участников через отдельных Telegram-ботов, Replay гарантирует, что разговоры, длившиеся годами, сохранят идеальный контекст, имена отправителей и точный порядок.
+Replay собирает историю чатов из ВКонтакте и Telegram в одну хронологическую ленту Telegram-супергруппы. Каждого участника изображает отдельный Telegram-бот, поэтому у сообщений сохраняются имена отправителей, контекст и порядок, даже если переписка шла годами.
 
 ### Ключевые возможности и технические детали
 - **Многозадачная архитектура**: Настраивайте и запускайте несколько независимых процессов восстановления на основе единой схемы `settings.json`. Интерфейс на Tkinter выступает надежным генератором конфигураций и монитором процессов.
 - **Два встроенных парсера**: 
   - **ВКонтакте**: Обрабатывает JSON-дампы от расширения `VkOpt`. Восстанавливает вложенные сообщения, пересылки и декодирует старые форматы VK.
   - **Telegram**: Парсит HTML-дампы Telegram Desktop. Извлекает внутреннюю структуру DOM для точной привязки путей к медиафайлам, ответам и стикерам.
-- **Умное сканирование отправителей**: Механизм нечеткого сканирования по директориям исходников обнаруживает уникальные ID отправителей и собирает их метаданные, автоматически генерируя блок конфигурации для привязки ботов.
+- **Сканирование отправителей**: нечёткий поиск по папкам с исходниками находит ID отправителей, собирает их метаданные и сам генерирует блок конфигурации для привязки ботов.
 - **Режим мульти-чата**: Резервный режим маршрутизации всех сообщений через одного бота с префиксом `[Имя Отправителя]` для экономии лимитов Telegram-ботов при восстановлении крупных групп.
 - **Устойчивость к лимитам**: Защита от банов и rate-limit блокировок. Динамически обрабатывает исключения `429 Flood Wait` через экспоненциальную задержку. Гарантирует бесконечные попытки отправки текста и ограниченные (настраиваемые) попытки загрузки медиа во избежание зависаний.
 - **Аналитический UI**: Использует нативную многопоточность для предотвращения зависаний интерфейса. Содержит живые прогресс-бары, подробные логи ошибок, монитор потоков, расчет времени (ETA) и мгновенное переключение языка.
