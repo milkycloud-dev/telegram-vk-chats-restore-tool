@@ -1,59 +1,81 @@
-<p align="center">
-  <img src="logo.png" alt="Replay Logo" width="300"/>
-</p>
+<p align="center"><img src="logo.png" width="160" alt="Replay logo"></p>
 
-<h1 align="center">Replay: VK / Telegram to Telegram Restore Tool</h1>
+<h1 align="center">Replay: VK and Telegram Chat Restore Tool</h1>
 
-<p align="center">
-  <b>A powerful, asynchronous restoration engine that reconstructs exported VKontakte and Telegram chats into a unified Telegram supergroup timeline, intelligently preserving the original multi-user flow.</b>
-</p>
+<p align="center">Desktop and CLI tool that replays exported VK and Telegram chats into one Telegram supergroup in the original order, with one bot per participant so every message keeps its sender. Resume, rate-limit handling, media placeholders.</p>
 
----
+<p align="center"><a href="https://github.com/milkycloud-dev/telegram-vk-chats-restore-tool/actions/workflows/release.yml"><img src="https://github.com/milkycloud-dev/telegram-vk-chats-restore-tool/actions/workflows/release.yml/badge.svg" alt="Release"></a></p>
+
+<p align="center"><a href="#english">English</a> | <a href="#русский">Русский</a></p>
+
+<a id="english"></a>
 
 ## English
 
-Replay is an advanced CLI/GUI application designed to chronologically stitch and replay fragmented chat histories from different social networks (VK and Telegram) into a single Telegram environment. By simulating multiple participants through individual Telegram bots, Replay ensures that complex conversations spanning years and platforms are preserved with perfect context, sender identity, and precise chronological ordering.
+### Purpose
 
-### Core Capabilities & Technical Features
-- **Multi-task Concurrency**: Configure and execute multiple independent replay operations from a single JSON-based settings schema. The Tkinter UI builds the configuration and monitors the running processes.
-- **Dual Source Parsers**: 
-  - **VKontakte**: Parses legacy JSON exports from the popular `VkOpt` extension. Recreates nested message hierarchies, forwarded structures, and decodes legacy VK payload mappings.
-  - **Telegram**: Parses standard Telegram Desktop HTML exports. Ingests all internal DOM structures to map media paths, nested replies, and sticker payloads correctly.
-- **Smart Sender Inference**: Implements a fuzzy-matching scan mechanism over source directories to detect unique sender IDs and metadata. Automatically creates a sender-to-bot mapping configuration block for immediate use.
-- **Multi-chat Routing**: Allows fallback to a single-bot `[Sender Name]` prefix mode to conserve Telegram bots while maintaining readability across massive groups.
-- **Network Resilience & Backoff Policy**: Built for stability against rate-limits. Dynamically handles Telegram's `429 Flood Wait` exceptions using exponential backoff, guarantees infinite text transmission retries, and enforces bounded (configurable) media upload retries to avoid deadlocks.
-- **Diagnostic UI**: work runs in background threads, so the UI does not freeze. Live progress bars, detailed error logs, resource/thread monitoring, ETA, and switching between two languages on the fly.
-- **Media Transcoding & Placeholders**: Filters through 9+ types of media (Photos, Stickers, Voice, Audio, Video, Video Notes, GIF, Documents, VK Gifts). Automatically injects descriptive `[Media Placeholder]` text when the original file is missing, corrupted, or unreachable.
+A conversation that moved from VK to Telegram, or lives in several exports, ends up split across files that nobody can read together. Replay parses the exports, merges them by time and posts the result into a Telegram supergroup, so the history reads as one chat again.
 
-### Installation & Deployment
-1. Ensure Python 3.14+ is installed.
-2. Clone the repository and install dependencies: `pip install -r requirements.txt`.
-3. Register your bots via `@BotFather` and retrieve API tokens.
-4. Add all required bots as Administrators to your target Telegram Supergroup.
-5. Launch `gui.py` (or execute the bundled `Chat Restore Tool.exe`).
-6. Add tasks via the interface, map your bot tokens, link your raw export directories, and start the replay pipeline.
+### Features
 
----
+- **Sources.** VK JSON exports made with the VkOpt extension, including nested forwards; Telegram Desktop HTML exports with replies, media paths and stickers.
+- **Senders.** Each original participant is posted by their own bot. The tool scans the exports, finds the senders and proposes a sender-to-bot map. With fewer bots, one bot can post everything with a `[Name]` prefix.
+- **Tasks.** Several independent replays in one `settings.json`; the GUI edits them and shows each run.
+- **Media.** Photos, stickers, voice, audio, video, video notes, GIF, documents and VK gifts. A missing or broken file becomes a labeled text placeholder.
+- **Reliability.** `429` answers are handled with exponential backoff; text is retried until sent, media a limited number of times; progress is saved in `state.json`, so a stopped run continues.
+- **Interface.** Tkinter GUI with progress, ETA, errors and thread and resource stats, in English and Russian; work runs in background threads.
+- **Pre-flight check.** `verify.py` sends one sample of each attachment type to the target chat before the full run, with synthesized samples for types whose originals are gone.
+
+### Setup
+
+1. Python 3.14 or newer: `pip install -r requirements.txt`.
+2. Create the bots with @BotFather and add all of them to the target supergroup as administrators.
+3. Start `python gui.py`, add a task, paste the bot tokens, point it at the export folders and start.
+
+CLI: `python run_export.py [--task N] [--dry-run] [--limit N] [--reset]`. `--dry-run` only parses and counts.
+
+`settings.json` holds bot tokens once filled in; do not share or commit it.
+
+### Releases
+
+A tag `v*` builds `ChatRestoreTool_Windows.zip` and `ChatRestoreTool_Linux.tar.gz` with PyInstaller on GitHub Actions and publishes them with the notes from [CHANGELOG.md](CHANGELOG.md).
+
+### License
+
+Proprietary, all rights reserved. Running the official release builds is allowed; see [LICENSE](LICENSE) for the full terms.
+
+<a id="русский"></a>
 
 ## Русский
 
-Replay собирает историю чатов из ВКонтакте и Telegram в одну хронологическую ленту Telegram-супергруппы. Каждого участника изображает отдельный Telegram-бот, поэтому у сообщений сохраняются имена отправителей, контекст и порядок, даже если переписка шла годами.
+### Назначение
 
-### Ключевые возможности и технические детали
-- **Многозадачная архитектура**: Настраивайте и запускайте несколько независимых процессов восстановления на основе единой схемы `settings.json`. Интерфейс на Tkinter выступает надежным генератором конфигураций и монитором процессов.
-- **Два встроенных парсера**: 
-  - **ВКонтакте**: Обрабатывает JSON-дампы от расширения `VkOpt`. Восстанавливает вложенные сообщения, пересылки и декодирует старые форматы VK.
-  - **Telegram**: Парсит HTML-дампы Telegram Desktop. Извлекает внутреннюю структуру DOM для точной привязки путей к медиафайлам, ответам и стикерам.
-- **Сканирование отправителей**: нечёткий поиск по папкам с исходниками находит ID отправителей, собирает их метаданные и сам генерирует блок конфигурации для привязки ботов.
-- **Режим мульти-чата**: Резервный режим маршрутизации всех сообщений через одного бота с префиксом `[Имя Отправителя]` для экономии лимитов Telegram-ботов при восстановлении крупных групп.
-- **Устойчивость к лимитам**: Защита от банов и rate-limit блокировок. Динамически обрабатывает исключения `429 Flood Wait` через экспоненциальную задержку. Гарантирует бесконечные попытки отправки текста и ограниченные (настраиваемые) попытки загрузки медиа во избежание зависаний.
-- **Аналитический UI**: Использует нативную многопоточность для предотвращения зависаний интерфейса. Содержит живые прогресс-бары, подробные логи ошибок, монитор потоков, расчет времени (ETA) и мгновенное переключение языка.
-- **Транскодирование медиа и заглушки**: Фильтрация более 9 типов вложений (Фото, Стикеры, Голосовые, Аудио, Видео, Кружочки, GIF, Документы, Подарки ВК). Если оригинальный файл утерян или поврежден, инструмент автоматически инжектирует текстовую `[Заглушку]` в историю.
+Переписка, которая переехала из VK в Telegram или лежит в нескольких выгрузках, оказывается разбросана по файлам, которые вместе не прочитать. Replay разбирает выгрузки, сводит их по времени и публикует результат в супергруппу Telegram, чтобы история снова читалась как один чат.
 
-### Установка и настройка
-1. Убедитесь, что установлен Python 3.14+.
-2. Склонируйте репозиторий и установите пакеты: `pip install -r requirements.txt`.
-3. Зарегистрируйте необходимое количество ботов через `@BotFather` и получите токены API.
-4. Добавьте всех ботов в качестве Администраторов в целевую супергруппу Telegram.
-5. Запустите `gui.py` (или готовый билд `Chat Restore Tool.exe`).
-6. Через графический интерфейс настройте задачи, привяжите токены, укажите пути к папкам экспорта и запустите процесс.
+### Возможности
+
+- **Источники.** JSON-выгрузки VK из расширения VkOpt, включая вложенные пересылки; HTML-выгрузки Telegram Desktop с ответами, путями к медиа и стикерами.
+- **Отправители.** Каждого участника публикует свой бот. Инструмент сканирует выгрузки, находит отправителей и предлагает карту «отправитель: бот». Если ботов мало, один бот может публиковать всё с префиксом `[Имя]`.
+- **Задачи.** Несколько независимых прогонов в одном `settings.json`; GUI их редактирует и показывает каждый запуск.
+- **Медиа.** Фото, стикеры, голосовые, аудио, видео, кружки, GIF, документы и подарки VK. Отсутствующий или битый файл заменяется подписанной текстовой заглушкой.
+- **Надёжность.** Ответы `429` обрабатываются с экспоненциальной паузой; текст повторяется до отправки, медиа ограниченное число раз; прогресс хранится в `state.json`, остановленный прогон продолжается.
+- **Интерфейс.** GUI на Tkinter с прогрессом, оставшимся временем, ошибками и статистикой потоков и ресурсов, на английском и русском; работа идёт в фоновых потоках.
+- **Предпроверка.** `verify.py` отправляет в целевой чат по одному образцу каждого типа вложений до полного прогона, для типов без оригиналов собирает образцы сам.
+
+### Настройка
+
+1. Python 3.14 или новее: `pip install -r requirements.txt`.
+2. Создайте ботов через @BotFather и добавьте их всех в целевую супергруппу администраторами.
+3. Запустите `python gui.py`, добавьте задачу, вставьте токены ботов, укажите папки выгрузок и запустите.
+
+CLI: `python run_export.py [--task N] [--dry-run] [--limit N] [--reset]`. `--dry-run` только разбирает и считает.
+
+После заполнения в `settings.json` лежат токены ботов; его нельзя передавать и коммитить.
+
+### Релизы
+
+Тег `v*` собирает `ChatRestoreTool_Windows.zip` и `ChatRestoreTool_Linux.tar.gz` через PyInstaller в GitHub Actions и публикует их с описанием из [CHANGELOG.md](CHANGELOG.md).
+
+### Лицензия
+
+Проприетарная, все права защищены. Запуск официальных сборок из релизов разрешён; полные условия в [LICENSE](LICENSE).
